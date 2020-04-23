@@ -1,0 +1,38 @@
+name: 'Beanstalk Deploy'
+description: 'Deploy an ECR Configuration File to AWS Elastic Beanstalk'
+author: 'Dorian Latchague'
+runs:
+  using: 'z'
+  main: 'beanstalk-deploy.js'
+inputs:
+  aws_access_key:
+    description: 'AWS Access Key'
+    required: true
+  aws_secret_key:
+    description: 'AWS Secret Key'
+    required: true
+  region:
+    description: 'AWS Region'
+    required: true
+  application_name:
+    description: 'Beanstalk application name'
+    required: true
+  environment_name:
+    description: 'Beanstalk environment name'
+    required: true
+  ecr_registry:
+    description: 'ECR Registry'
+    required: true
+  version_label:
+    description: 'Image Tag from ECR and Version label for new Beanstalk version'
+    required: true
+  wait_for_deployment:
+    description: 'Whether the action should wait for the deployment to finish and log status messages during the wait. Default is "true". If set to "false" the action will start the deployment on Beanstalk and then exit.'
+    required: false
+  wait_for_environment_recovery:
+    description: 'How many seconds to wait for the environment to return to Green state after deployment is finished. Default is 30 seconds.'
+    required: false
+
+branding:
+  icon: 'arrow-up'  
+  color: 'green'
