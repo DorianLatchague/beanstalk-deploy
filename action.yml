@@ -2,7 +2,7 @@ name: 'Beanstalk Deploy'
 description: 'Deploy an ECR Configuration File to AWS Elastic Beanstalk'
 author: 'Dorian Latchague'
 runs:
-  using: 'z'
+  using: 'node12'
   main: 'beanstalk-deploy.js'
 inputs:
   aws_access_key:
