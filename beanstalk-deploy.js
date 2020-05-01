@@ -123,14 +123,14 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     let s3Key = `/${application}/${versionLabel}/Dockerrun.aws.json`;
     let bucket, deployStart;
     
-    let file = 
-`{
+    let file = `
+{
     "AWSEBDockerrunVersion": 2,
     "volumes": [
         {
-            "name": "public",
+            "name": "Public",
             "host": {
-                "sourcePath": "/var/www/public/"
+                "sourcePath": "public"
             }
         }
     ],
@@ -148,13 +148,13 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             ],
             "mountPoints": [
                 {
-                    "sourceVolume": "public",
+                    "sourceVolume": "Public",
                     "containerPath": "/var/www/public/"
                 }
             ]
         },
         {
-            "name": "nginx-proxy",
+            "name": "nginx-config",
             "image": "${ECR_REGISTRY}/nginx-config:${application}",
             "essential": true,
             "memory": 128,
@@ -164,12 +164,9 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
                     "containerPort": 80
                 }
             ],
-            "links": [
-                "nodejs"
-            ],
             "mountPoints": [
                 {
-                    "sourceVolume": "public",
+                    "sourceVolume": "Public",
                     "containerPath": "/var/www/public/",
                     "readOnly": true
                 }
