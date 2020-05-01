@@ -124,7 +124,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     let bucket, deployStart;
     
     let file = 
-{
+`{
     "AWSEBDockerrunVersion": 2,
     "volumes": [
         {
@@ -176,7 +176,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             ]
         }
     ]
-}
+}`
     createStorageLocation().then(result => {
         expect(200, result );
         bucket = result.data.CreateStorageLocationResponse.CreateStorageLocationResult.S3Bucket;
