@@ -124,7 +124,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     let bucket, deployStart;
     
     let file = 
-`{
+{
     "AWSEBDockerrunVersion": 2,
     "volumes": [
         {
@@ -139,6 +139,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             "name": "nodejs",
             "image": "${ECR_REGISTRY}/${application}:${versionLabel}",
             "essential": true,
+            "memory": 128,
             "portMappings": [
                 {
                     "containerPort": 8000,
@@ -156,6 +157,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             "name": "nginx-proxy",
             "image": "${ECR_REGISTRY}/nginx-config:${application}",
             "essential": true,
+            "memory": 128,
             "portMappings": [
                 {
                     "hostPort": 80,
@@ -174,7 +176,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             ]
         }
     ]
-}`
+}
     createStorageLocation().then(result => {
         expect(200, result );
         bucket = result.data.CreateStorageLocationResponse.CreateStorageLocationResult.S3Bucket;
