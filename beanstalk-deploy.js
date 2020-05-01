@@ -125,18 +125,55 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     
     let file = 
 `{
-    "AWSEBDockerrunVersion": "1",
-    "Image": { 
-        "Name": "${ECR_REGISTRY}/${application}:${versionLabel}",
-        "Update": "true"
-    },
-    "Ports": [
+    "AWSEBDockerrunVersion": 2,
+    "volumes": [
         {
-        "ContainerPort": 8000,
-        "HostPort": 8000
+            "name": "public",
+            "host": {
+                "sourcePath": "/var/www/public/"
+            }
         }
     ],
-    "Logging": "/var/log/nginx"
+    "containerDefinitions": [
+        {
+            "name": "nodejs",
+            "image": "${ECR_REGISTRY}/${application}:${versionLabel}",
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 8000,
+                    "hostPort": 8000
+                }
+            ],
+            "mountPoints": [
+                {
+                    "sourceVolume": "public",
+                    "containerPath": "/var/www/public/"
+                }
+            ]
+        },
+        {
+            "name": "nginx-proxy",
+            "image": "${ECR_REGISTRY}/nginx-config:${application}",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "containerPort": 80
+                }
+            ],
+            "links": [
+                "nodejs"
+            ],
+            "mountPoints": [
+                {
+                    "sourceVolume": "public",
+                    "containerPath": "/var/www/public/",
+                    "readOnly": true
+                }
+            ]
+        }
+    ]
 }`
     createStorageLocation().then(result => {
         expect(200, result );
