@@ -164,6 +164,9 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
                     "containerPort": 80
                 }
             ],
+            "links": [
+                "nodejs"
+            ],
             "mountPoints": [
                 {
                     "sourceVolume": "Public",
