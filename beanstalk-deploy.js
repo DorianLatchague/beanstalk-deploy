@@ -126,14 +126,6 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     let file = `
 {
     "AWSEBDockerrunVersion": 2,
-    "volumes": [
-        {
-            "name": "Public",
-            "host": {
-                "sourcePath": "public"
-            }
-        }
-    ],
     "containerDefinitions": [
         {
             "name": "nodejs",
@@ -148,7 +140,6 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             ],
             "mountPoints": [
                 {
-                    "sourceVolume": "Public",
                     "containerPath": "/var/www/public/"
                 }
             ]
@@ -164,15 +155,20 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
                     "containerPort": 80
                 }
             ],
-            "links": [
-                "nodejs"
-            ],
-            "mountPoints": [
+            "volumeFrom": [
                 {
-                    "sourceVolume": "Public",
-                    "containerPath": "/var/www/public/",
+                    "sourceContainer": "nodejs",
                     "readOnly": true
                 }
+            ],
+            "dependsOn": [
+                {
+                    "containerName": "nodejs",
+                    "condition": "COMPLETE"
+                }
+            ],
+            "links": [
+                "nodejs"
             ]
         }
     ]
