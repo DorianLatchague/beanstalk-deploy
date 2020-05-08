@@ -157,23 +157,17 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             "name": "nginx-config",
             "image": "${ECR_REGISTRY}/nginx-config:${application}",
             "memory": 128,
+            "essential": true,
             "portMappings": [
                 {
                     "hostPort": 80,
                     "containerPort": 80
                 }
             ],
-            "dependsOn": [
+            "volumesFrom": [
                 {
-                    "containerName": "nodejs",
-                    "condition": "COMPLETE"
-                }
-            ],
-            "mountPoints": [
-                {
-                    "sourceVolume": "Public",
-                    "containerPath": "/var/www/public/",
-                    "readOnly": true
+                    "readOnly": true,
+                    "sourceContainer": "nodejs"
                 }
             ]
         }
