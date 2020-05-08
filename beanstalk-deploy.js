@@ -156,7 +156,6 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
         {
             "name": "nginx-config",
             "image": "${ECR_REGISTRY}/nginx-config:${application}",
-            "essential": true,
             "memory": 128,
             "portMappings": [
                 {
