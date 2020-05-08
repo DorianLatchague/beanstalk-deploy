@@ -129,9 +129,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     "volumes": [
         {
             "name": "Public",
-            "host": {
-                "sourcePath": "public"
-            }
+            "host": {}
         }
     ],
     "containerDefinitions": [
@@ -157,17 +155,18 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             "name": "nginx-config",
             "image": "${ECR_REGISTRY}/nginx-config:${application}",
             "memory": 128,
-            "essential": true,
+            "essential": true
             "portMappings": [
                 {
                     "hostPort": 80,
                     "containerPort": 80
                 }
             ],
-            "volumesFrom": [
+            "mountPoints": [
                 {
-                    "readOnly": true,
-                    "sourceContainer": "nodejs"
+                    "sourceVolume": "Public",
+                    "containerPath": "/var/www/public/",
+                    "readOnly": true
                 }
             ]
         }
