@@ -3,7 +3,6 @@
 // Using a lot of resources from Einar Egilsson's beanstalk-deploy, https://github.com/einaregilsson/beanstalk-deploy
 
 const awsApiRequest = require('./aws-api-request');
-const fs = require('fs');
 
 const IS_GITHUB_ACTION = !!process.env.GITHUB_ACTION;
 
@@ -66,6 +65,10 @@ function deployBeanstalkVersion(application, environmentName, versionLabel) {
     });
 }
 
+function introduceEnvironmentVariablesIntoJSONFile(file, ECR_REGISTRY, application, environmentName, versionLabel) {
+    return file.replace(' ','').replace('${ECR_REGISTRY}', ECR_REGISTRY).replace('${APPLICATION_NAME}', application).replace('${ENVIRONMENT_NAME}', environmentName).replace('${VERSION_LABEL}',versionLabel);;
+}
+
 function describeEvents(application, environmentName, startTime) {
     return awsApiRequest({
         service: 'elasticbeanstalk',
@@ -92,18 +95,6 @@ function describeEnvironments(application, environmentName) {
     });
 }
 
-function getApplicationVersion(application, versionLabel) {
-    return awsApiRequest({
-        service: 'elasticbeanstalk',
-        querystring: {
-            Operation: 'DescribeApplicationVersions', 
-            Version: '2010-12-01',
-            ApplicationName : application,
-            'VersionLabels.members.1' : versionLabel //Yes, that's the horrible way to pass an array...
-        }
-    });
-}
-
 function expect(status, result, extraErrorMessage) {
     if (status !== result.statusCode) { 
         if (extraErrorMessage) {
@@ -118,65 +109,27 @@ function expect(status, result, extraErrorMessage) {
 }
 
 //Uploads zip file, creates new version and deploys it
-function deployNewVersion(application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds) {
-
+function deployNewVersion(application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile) {
+    if (!dockerrunFile) {
+        dockerrunFile = `{
+            "AWSEBDockerrunVersion": "1",
+            "Image": { 
+                "Name": "${ECR_REGISTRY}/${application}:${versionLabel}",
+                "Update": "true"
+            },
+            "Ports": [
+                {
+                "ContainerPort": 8000,
+                "HostPort": 8000
+                }
+            ],
+            "Logging": "/var/log/nginx"
+        }`
+    } else {
+        dockerrunFile = introduceEnvironmentVariablesIntoJSONFile(dockerrunFile, ECR_REGISTRY, application, environmentName, versionLabel);
+    }
     let s3Key = `/${application}/${versionLabel}/Dockerrun.aws.json`;
     let bucket, deployStart;
-    
-    let file = `
-
-{
-    "AWSEBDockerrunVersion": 2,
-    "volumes": [
-        {
-            "name": "Public",
-            "host": {
-                "sourcePath": "public"
-            }
-        }
-    ],
-    "containerDefinitions": [
-        {
-            "name": "nodejs",
-            "image": "${ECR_REGISTRY}/${application}:${versionLabel}",
-            "essential": true,
-            "memory": 128,
-            "portMappings": [
-                {
-                    "containerPort": 8000,
-                    "hostPort": 8000
-                }
-            ],
-            "mountPoints": [
-                {
-                    "sourceVolume": "Public",
-                    "containerPath": "/var/www/public/"
-                }
-            ]
-        },
-        {
-            "name": "nginx-config",
-            "image": "${ECR_REGISTRY}/nginx-config:${application}",
-            "memory": 128,
-            "essential": true,
-            "portMappings": [
-                {
-                    "hostPort": 80,
-                    "containerPort": 80
-                }
-            ],
-            "links": [
-                "nodejs"
-            ],
-            "volumesFrom": [
-                {
-                    "readOnly": true,
-                    "sourceContainer": "nodejs"
-                }
-            ]
-        }
-    ]
-}`
     createStorageLocation().then(result => {
         expect(200, result );
         bucket = result.data.CreateStorageLocationResponse.CreateStorageLocationResult.S3Bucket;
@@ -187,7 +140,7 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
             throw new Error(`Version ${versionLabel} already exists in S3!`);
         }
         expect(404, result); 
-        return uploadFileToS3(bucket, s3Key, file);
+        return uploadFileToS3(bucket, s3Key, dockerrunFile);
     }).then(result => {
         expect(200, result);
         console.log(`New build successfully uploaded to S3, bucket=${bucket}, key=${s3Key}`);
@@ -224,35 +177,6 @@ function deployNewVersion(application, environmentName, versionLabel, waitUntilD
     }); 
 }
 
-//Deploys existing version in EB
-function deployExistingVersion(application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds) {
-    let deployStart = new Date();
-    console.log(`Deploying existing version ${versionLabel}`);
-
-    deployBeanstalkVersion(application, environmentName, versionLabel).then(result => {
-        expect(200, result);
-        if (waitUntilDeploymentIsFinished) {
-            console.log('Deployment started, "wait_for_deployment" was true...\n');
-            return waitForDeployment(application, environmentName, versionLabel, deployStart, waitForRecoverySeconds);
-        } else {
-            console.log('Deployment started, parameter "wait_for_deployment" was false, so action is finished.');
-            console.log('**** IMPORTANT: Please verify manually that the deployment succeeds!');
-            process.exit(0);
-        }
-    }).then(envAfterDeployment => {
-        if (envAfterDeployment.Health === 'Green') {
-            console.log('Environment update successful!');
-            process.exit(0);
-        } else {
-            console.warn(`Environment update finished, but environment health is: ${envAfterDeployment.Health}, HealthStatus: ${envAfterDeployment.HealthStatus}`);
-            process.exit(1);
-        }
-    }).catch(err => {
-        console.error(`Deployment failed: ${err}`);
-        process.exit(2);
-    }); 
-}
-
 
 function strip(val) {
     //Strip leadig or trailing whitespace
@@ -264,7 +188,8 @@ function main() {
     let application, 
         environmentName, 
         versionLabel, 
-        region, 
+        region,
+        dockerrunFile = "",
         waitForRecoverySeconds = 30, 
         waitUntilDeploymentIsFinished = true; //Whether or not to wait for the deployment to complete...
 
@@ -272,7 +197,8 @@ function main() {
         application = strip(process.env.INPUT_APPLICATION_NAME);
         environmentName = strip(process.env.INPUT_ENVIRONMENT_NAME);
         versionLabel = strip(process.env.INPUT_VERSION_LABEL);
-        ECR_REGISTRY = strip(process.env.INPUT_ECR_REGISTRY)
+        ECR_REGISTRY = strip(process.env.INPUT_ECR_REGISTRY);
+        dockerrunFile = process.env.DOCKERRUN_JSON;
 
         awsApiRequest.accessKey = strip(process.env.INPUT_AWS_ACCESS_KEY);
         awsApiRequest.secretKey = strip(process.env.INPUT_AWS_SECRET_KEY);
@@ -290,12 +216,12 @@ function main() {
         if (process.argv.length < 6) {
             console.log('\nbeanstalk-deploy: Deploying ECR info to AWS Elastic Beanstalk');
             console.log('https://github.com/einaregilsson/beanstalk-deploy\n');
-            console.log('Usage: beanstalk-deploy.js <application> <environment> <versionLabel> <region> <ECR_REGISTRY>\n');
+            console.log('Usage: beanstalk-deploy.js <application> <environment> <versionLabel> <region> <ECR_REGISTRY> <DOCKERRUN_JSON> \n');
             console.log('Environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be defined for the program to work.');
             process.exit(1);
         }
 
-        [application, environmentName, versionLabel, region, ECR_REGISTRY] = process.argv.slice(2);
+        [application, environmentName, versionLabel, region, ECR_REGISTRY, DOCKERRUN_JSON] = process.argv.slice(2);
 
         awsApiRequest.accessKey = strip(process.env.AWS_ACCESS_KEY_ID);
         awsApiRequest.secretKey = strip(process.env.AWS_SECRET_ACCESS_KEY);
@@ -324,10 +250,11 @@ function main() {
     console.log('         Application: ' + application);
     console.log('         Environment: ' + environmentName);
     console.log('       Version Label: ' + versionLabel);
-    console.log('         ECR Registry: ' + ECR_REGISTRY);
+    console.log('        ECR Registry: ' + ECR_REGISTRY);
     console.log('          AWS Region: ' + awsApiRequest.region);
     console.log('      AWS Access Key: ' + awsApiRequest.accessKey.length + ' characters long, starts with ' + awsApiRequest.accessKey.charAt(0));
     console.log('      AWS Secret Key: ' + awsApiRequest.secretKey.length + ' characters long, starts with ' + awsApiRequest.secretKey.charAt(0));
+    console.log('  Dockerrun.aws.json: ' + dockerrunFile ? 'Provided': 'Not Provided, will use the default single container definition.');
     console.log(' Wait for deployment: ' + waitUntilDeploymentIsFinished);
     console.log('  Recovery wait time: ' + waitForRecoverySeconds);
     console.log('');

@@ -6,6 +6,26 @@ Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for pro
 
 ### Optional parameters
 
+`dockerrun_json`: You can provide your Dockerrun.aws.json file. You have access to a few parameters inside of this json file.  | SYNTAX                 | VARIABLE         |
+            | ---------------------- | ---------------- |
+            | ${ECR_REGISTRY}        | ecr_registry     |
+            | ${APPLICATION_NAME}    | application_name |
+            | ${VERSION_LABEL}       | version_label    |
+            | ${ENVIRONMENT_NAME}    | environment_name | Default Dockerrun.aws.json file is: ```
+{
+    "AWSEBDockerrunVersion": "1",
+    "Image": { 
+        "Name": "${ECR_REGISTRY}/${APPLICATION}:${VERSION_LABEL}",
+        "Update": "true"
+    },
+    "Ports": [
+        {
+        "ContainerPort": 8000,
+        "HostPort": 8000
+        }
+    ],
+    "Logging": "/var/log/nginx"
+}```
 `wait_for_deployment`: Whether the action should wait for the deployment to be complete in Elastic Beanstalk. Default is `true`.
 Deployments, especially immutable ones can take a long time to complete and eat up a lot of GitHub Actions minutes. So if you prefer
 to just start the deployment in Elastic Beanstalk and not wait for it to be completely finished then you can set this parameter to `false`.

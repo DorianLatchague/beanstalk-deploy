@@ -26,13 +26,15 @@ inputs:
   version_label:
     description: 'Image Tag from ECR and Version label for new Beanstalk version'
     required: true
+  dockerrun_json:
+    description: 'Dockerrun.aws.json File for deployment. Default will deploy a standard single-container configuration'
+    required: false
   wait_for_deployment:
     description: 'Whether the action should wait for the deployment to finish and log status messages during the wait. Default is "true". If set to "false" the action will start the deployment on Beanstalk and then exit.'
     required: false
   wait_for_environment_recovery:
     description: 'How many seconds to wait for the environment to return to Green state after deployment is finished. Default is 30 seconds.'
     required: false
-
 branding:
   icon: 'arrow-up'  
   color: 'green'
