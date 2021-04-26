@@ -254,12 +254,12 @@ function main() {
     console.log('          AWS Region: ' + awsApiRequest.region);
     console.log('      AWS Access Key: ' + awsApiRequest.accessKey.length + ' characters long, starts with ' + awsApiRequest.accessKey.charAt(0));
     console.log('      AWS Secret Key: ' + awsApiRequest.secretKey.length + ' characters long, starts with ' + awsApiRequest.secretKey.charAt(0));
-    console.log('  Dockerrun.aws.json: ' + dockerrunFile ? 'Provided': 'Not Provided, will use the default single container definition.');
+    console.log('  Dockerrun.aws.json: ' + (dockerrunFile ? 'Provided': 'Not Provided, will use the default single container definition.'));
     console.log(' Wait for deployment: ' + waitUntilDeploymentIsFinished);
     console.log('  Recovery wait time: ' + waitForRecoverySeconds);
     console.log('');
 
-    deployNewVersion(application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds);
+    deployNewVersion(application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile);
 }
 
 function formatTimespan(since) {
