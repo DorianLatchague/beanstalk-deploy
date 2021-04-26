@@ -7,15 +7,25 @@ Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for pro
 ### Optional parameters
 
 `dockerrun_json`: You can provide your own Dockerrun.aws.json file. You have access to a few parameters inside of this json file. I recommend providing the file by using a read-file github action. For example:
-```
+```yaml
 steps:
   - name: Read Dockerrun.aws.json
     id: read-file
     uses: juliangruber/read-file-action@v1
     with:
       path: ./Dockerrun.aws.json
-  - name: Echo Dockerrun.aws.json
-    run: echo ${{ steps.package.outputs.content }}
+  - name: Deploy to EB
+    uses: DorianLatchague/beanstalk-deploy@v3.0
+    with: 
+        dockerrun_json: ${{ steps.read-file.outputs.content }}
+        ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: rize-website
+        environment_name: rize3d-website-production
+        version_label: ${{ github.sha }}
+        region: us-east-1
+        wait_for_environment_recovery: 300
 ```
 | SYNTAX                 | VARIABLE         |
 | ---------------------- | ---------------- |
@@ -25,7 +35,7 @@ steps:
 | ${ENVIRONMENT_NAME}    | environment_name | 
 
 Default Dockerrun.aws.json file is: 
-```
+```json
 {
     "AWSEBDockerrunVersion": "1",
     "Image": { 
