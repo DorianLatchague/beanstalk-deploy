@@ -13,6 +13,7 @@ Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for pro
 | ${APPLICATION_NAME}    | application_name |
 | ${VERSION_LABEL}       | version_label    |
 | ${ENVIRONMENT_NAME}    | environment_name | 
+
 Default Dockerrun.aws.json file is: 
 ```
 {
