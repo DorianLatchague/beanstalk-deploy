@@ -12,12 +12,13 @@ Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for pro
 | ${ECR_REGISTRY}        | ecr_registry     |
 | ${APPLICATION_NAME}    | application_name |
 | ${VERSION_LABEL}       | version_label    |
-| ${ENVIRONMENT_NAME}    | environment_name | Default Dockerrun.aws.json file is: 
+| ${ENVIRONMENT_NAME}    | environment_name | 
+Default Dockerrun.aws.json file is: 
 ```
 {
     "AWSEBDockerrunVersion": "1",
     "Image": { 
-        "Name": "${ECR_REGISTRY}/${APPLICATION}:${VERSION_LABEL}",
+        "Name": "${ECR_REGISTRY}/${APPLICATION_NAME}:${VERSION_LABEL}",
         "Update": "true"
     },
     "Ports": [
