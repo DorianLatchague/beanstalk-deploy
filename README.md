@@ -6,7 +6,17 @@ Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for pro
 
 ### Optional parameters
 
-`dockerrun_json`: You can provide your Dockerrun.aws.json file. You have access to a few parameters inside of this json file.  
+`dockerrun_json`: You can provide your own Dockerrun.aws.json file. You have access to a few parameters inside of this json file. I recommend providing the file by using a read-file github action. For example:
+```
+steps:
+  - name: Read Dockerrun.aws.json
+    id: read-file
+    uses: juliangruber/read-file-action@v1
+    with:
+      path: ./Dockerrun.aws.json
+  - name: Echo Dockerrun.aws.json
+    run: echo ${{ steps.package.outputs.content }}
+```
 | SYNTAX                 | VARIABLE         |
 | ---------------------- | ---------------- |
 | ${ECR_REGISTRY}        | ecr_registry     |
@@ -53,5 +63,4 @@ the deployment and in those cases we don't want to fail the build.
 1. The S3 upload is a simple PUT request, we don't handle chunked upload. It has worked fine for files that are a 
 few megabytes in size, if your files are much larger than that it may cause problems.
 2. The script does not roll back if a deploy fails.
-3. There is no integration with Git, like there is in the official EB cli. This script only takes a readymade zip file and
-deploys it.
+3. There is no integration with Git, like there is in the official EB cli. This script uses your existing ECR
