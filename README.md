@@ -23,7 +23,7 @@ steps:
     with: 
         dockerrun_json: ${{ steps.read-file.outputs.content }}
         ecr_registry: ${{ steps.login-ecr.outputs.registry }}
-        ecr_registry: ${{ secrets.ECR_REPOSITORY }}
+        ecr_repository: ${{ secrets.ECR_REPOSITORY }}
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: ${{ secrets.EB_APPLICATION_NAME }}
@@ -35,6 +35,7 @@ steps:
 | SYNTAX                 | VARIABLE         |
 | ---------------------- | ---------------- |
 | {{ECR_REGISTRY}}       | ecr_registry     |
+| {{ECR_REPOSITORY}}     | ecr_repository   |
 | {{APPLICATION_NAME}}   | application_name |
 | {{VERSION_LABEL}}      | version_label    |
 | {{ENVIRONMENT_NAME}}   | environment_name | 
