@@ -66,7 +66,7 @@ function deployBeanstalkVersion(application, environmentName, versionLabel) {
 }
 
 function introduceEnvironmentVariablesIntoJSONFile(file, ECR_REGISTRY, application, environmentName, versionLabel) {
-    return file.replace(/^\{\{\s*ECR_REGISTRY\s*\}\}$/g, ECR_REGISTRY).replace(/^\{\{\s*APPLICATION_NAME\s*\}\}$/g, application).replace(/^\{\{\s*ENVIRONMENT_NAME\s*\}\}$/g, environmentName).replace(/^\{\{\s*VERSION_LABEL\s*\}\}$/g,versionLabel);;
+    return file.replace(/\{\{\s*ECR_REGISTRY\s*\}\}/g, ECR_REGISTRY).replace(/\{\{\s*APPLICATION_NAME\s*\}\}/g, application).replace(/\{\{\s*ENVIRONMENT_NAME\s*\}\}/g, environmentName).replace(/\{\{\s*VERSION_LABEL\s*\}\}/g,versionLabel);;
 }
 
 function describeEvents(application, environmentName, startTime) {
