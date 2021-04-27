@@ -23,6 +23,9 @@ inputs:
   ecr_registry:
     description: 'ECR Registry'
     required: true
+  ecr_repository:
+    description: 'ECR Repository'
+    required: true
   version_label:
     description: 'Image Tag from ECR and Version label for new Beanstalk version'
     required: true

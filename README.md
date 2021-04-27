@@ -4,9 +4,9 @@ Beanstalk Deploy is a GitHub action (and command line script) meant to deploy EC
 
 Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for providing the base to work from.
 
-### AWS IAM Policy Needed
+### AWS IAM Policies Needed
 
-Make sure the IAM user with provided credentials is authorized to perform the following policy: ecr:GetAuthorizationToken
+Make sure your IAM user and your Elastic Beanstalk environment have the correct permissions to run beanstalk-deploy.
 
 ### Optional parameters
 
@@ -23,12 +23,13 @@ steps:
     with: 
         dockerrun_json: ${{ steps.read-file.outputs.content }}
         ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+        ecr_registry: ${{ secrets.ECR_REPOSITORY }}
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        application_name: example-app
-        environment_name: example-env
+        application_name: ${{ secrets.EB_APPLICATION_NAME }}
+        environment_name: ${{ secrets.EB_ENVIRONMENT_NAME }}
         version_label: ${{ github.sha }}
-        region: us-west-1
+        region: ${{ secrets.AWS_EB_REGION }}
         wait_for_environment_recovery: 300
 ```
 | SYNTAX                 | VARIABLE         |
