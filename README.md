@@ -4,6 +4,10 @@ Beanstalk Deploy is a GitHub action (and command line script) meant to deploy EC
 
 Thanks to GitHub user [Einar Egilsson](https://github.com/einaregilsson) for providing the base to work from.
 
+### AWS IAM Policy Needed
+
+Make sure the IAM user with provided credentials is authorized to perform the following policy: ecr:GetAuthorizationToken
+
 ### Optional parameters
 
 `dockerrun_json`: You can provide your own Dockerrun.aws.json file. You have access to a few parameters inside of this json file. I recommend providing the file by using a read-file github action. For example:
@@ -21,10 +25,10 @@ steps:
         ecr_registry: ${{ steps.login-ecr.outputs.registry }}
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        application_name: rize-website
-        environment_name: rize3d-website-production
+        application_name: example-app
+        environment_name: example-env
         version_label: ${{ github.sha }}
-        region: us-east-1
+        region: us-west-1
         wait_for_environment_recovery: 300
 ```
 | SYNTAX                 | VARIABLE         |
