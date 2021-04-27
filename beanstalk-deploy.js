@@ -66,7 +66,7 @@ function deployBeanstalkVersion(application, environmentName, versionLabel) {
 }
 
 function introduceEnvironmentVariablesIntoJSONFile(file, ECR_REGISTRY, application, environmentName, versionLabel) {
-    return file.replace(' ','').replace('${ECR_REGISTRY}', ECR_REGISTRY).replace('${APPLICATION_NAME}', application).replace('${ENVIRONMENT_NAME}', environmentName).replace('${VERSION_LABEL}',versionLabel);;
+    return file.replace(/^\{\{\s*ECR_REGISTRY\s*\}\}$/g, ECR_REGISTRY).replace(/^\{\{\s*APPLICATION_NAME\s*\}\}$/g, application).replace(/^\{\{\s*ENVIRONMENT_NAME\s*\}\}$/g, environmentName).replace(/^\{\{\s*VERSION_LABEL\s*\}\}$/g,versionLabel);;
 }
 
 function describeEvents(application, environmentName, startTime) {
@@ -198,7 +198,7 @@ function main() {
         environmentName = strip(process.env.INPUT_ENVIRONMENT_NAME);
         versionLabel = strip(process.env.INPUT_VERSION_LABEL);
         ECR_REGISTRY = strip(process.env.INPUT_ECR_REGISTRY);
-        dockerrunFile = process.env.DOCKERRUN_JSON;
+        dockerrunFile = process.env.INPUT_DOCKERRUN_JSON;
 
         awsApiRequest.accessKey = strip(process.env.INPUT_AWS_ACCESS_KEY);
         awsApiRequest.secretKey = strip(process.env.INPUT_AWS_SECRET_KEY);
@@ -213,15 +213,15 @@ function main() {
         }
 
     } else { //Running as command line script
-        if (process.argv.length < 6) {
+        if (process.argv.length < 8) {
             console.log('\nbeanstalk-deploy: Deploying ECR info to AWS Elastic Beanstalk');
             console.log('https://github.com/einaregilsson/beanstalk-deploy\n');
-            console.log('Usage: beanstalk-deploy.js <application> <environment> <versionLabel> <region> <ECR_REGISTRY> <DOCKERRUN_JSON> \n');
+            console.log('Usage: beanstalk-deploy.js <application> <environment> <versionLabel> <region> <ECR_REGISTRY> <dockerrunFile> \n');
             console.log('Environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be defined for the program to work.');
             process.exit(1);
         }
 
-        [application, environmentName, versionLabel, region, ECR_REGISTRY, DOCKERRUN_JSON] = process.argv.slice(2);
+        [application, environmentName, versionLabel, region, ECR_REGISTRY, dockerrunFile] = process.argv.slice(2);
 
         awsApiRequest.accessKey = strip(process.env.AWS_ACCESS_KEY_ID);
         awsApiRequest.secretKey = strip(process.env.AWS_SECRET_ACCESS_KEY);

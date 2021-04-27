@@ -29,17 +29,17 @@ steps:
 ```
 | SYNTAX                 | VARIABLE         |
 | ---------------------- | ---------------- |
-| ${ECR_REGISTRY}        | ecr_registry     |
-| ${APPLICATION_NAME}    | application_name |
-| ${VERSION_LABEL}       | version_label    |
-| ${ENVIRONMENT_NAME}    | environment_name | 
+| {{ECR_REGISTRY}}       | ecr_registry     |
+| {{APPLICATION_NAME}}   | application_name |
+| {{VERSION_LABEL}}      | version_label    |
+| {{ENVIRONMENT_NAME}}   | environment_name | 
 
 Default Dockerrun.aws.json file is: 
 ```json
 {
     "AWSEBDockerrunVersion": "1",
     "Image": { 
-        "Name": "${ECR_REGISTRY}/${APPLICATION_NAME}:${VERSION_LABEL}",
+        "Name": "{{ECR_REGISTRY}}/{{APPLICATION_NAME}}:{{VERSION_LABEL}}",
         "Update": "true"
     },
     "Ports": [
@@ -73,4 +73,4 @@ the deployment and in those cases we don't want to fail the build.
 1. The S3 upload is a simple PUT request, we don't handle chunked upload. It has worked fine for files that are a 
 few megabytes in size, if your files are much larger than that it may cause problems.
 2. The script does not roll back if a deploy fails.
-3. There is no integration with Git, like there is in the official EB cli. This script uses your existing ECR
+3. There is no integration with Git, like there is in the official EB cli. This script uses your Dockerrun.aws.json to deploy existing ECR containers.
