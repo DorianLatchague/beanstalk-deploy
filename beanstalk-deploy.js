@@ -109,12 +109,12 @@ function expect(status, result, extraErrorMessage) {
 }
 
 //Uploads zip file, creates new version and deploys it
-function deployNewVersion(repository, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile) {
+function deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile) {
     if (!dockerrunFile) {
         dockerrunFile = `{
             "AWSEBDockerrunVersion": "1",
             "Image": { 
-                "Name": "${ECR_REGISTRY}/${repository}:${versionLabel}",
+                "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:${versionLabel}",
                 "Update": "true"
             },
             "Ports": [
@@ -263,7 +263,7 @@ function main() {
     console.log('  Recovery wait time: ' + waitForRecoverySeconds);
     console.log('');
 
-    deployNewVersion(repository, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile);
+    deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile);
 }
 
 function formatTimespan(since) {
