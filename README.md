@@ -24,6 +24,7 @@ steps:
         dockerrun_json: ${{ steps.read-file.outputs.content }}
         ecr_registry: ${{ steps.login-ecr.outputs.registry }}
         ecr_repository: ${{ secrets.ECR_REPOSITORY }}
+        ecr_image_tag: ${{ github.sha }}
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: ${{ secrets.EB_APPLICATION_NAME }}
@@ -36,6 +37,7 @@ steps:
 | ---------------------- | ---------------- |
 | {{ECR_REGISTRY}}       | ecr_registry     |
 | {{ECR_REPOSITORY}}     | ecr_repository   |
+| {{ECR_IMAGE_TAG}}      | ecr_image_tag    |
 | {{APPLICATION_NAME}}   | application_name |
 | {{VERSION_LABEL}}      | version_label    |
 | {{ENVIRONMENT_NAME}}   | environment_name | 
@@ -45,7 +47,7 @@ Default Dockerrun.aws.json file is:
 {
     "AWSEBDockerrunVersion": "1",
     "Image": { 
-        "Name": "{{ECR_REGISTRY}}/{{APPLICATION_NAME}}:{{VERSION_LABEL}}",
+        "Name": "{{ECR_REGISTRY}}/{{ECR_REPOSITORY}}:{{ECR_IMAGE_TAG}}",
         "Update": "true"
     },
     "Ports": [

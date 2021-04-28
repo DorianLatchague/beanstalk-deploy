@@ -65,8 +65,8 @@ function deployBeanstalkVersion(application, environmentName, versionLabel) {
     });
 }
 
-function introduceEnvironmentVariablesIntoJSONFile(file, ECR_REGISTRY, repository, application, environmentName, versionLabel) {
-    return file.replace(/\{\{\s*ECR_REGISTRY\s*\}\}/g, ECR_REGISTRY).replace(/\{\{\s*ECR_REPOSITORY\s*\}\}/g, repository).replace(/\{\{\s*APPLICATION_NAME\s*\}\}/g, application).replace(/\{\{\s*ENVIRONMENT_NAME\s*\}\}/g, environmentName).replace(/\{\{\s*VERSION_LABEL\s*\}\}/g,versionLabel);;
+function introduceEnvironmentVariablesIntoJSONFile(file, ECR_REGISTRY, ECR_REPOSITORY, ECR_IMAGE_TAG, application, environmentName, versionLabel) {
+    return file.replace(/\{\{\s*ECR_REGISTRY\s*\}\}/g, ECR_REGISTRY).replace(/\{\{\s*ECR_REPOSITORY\s*\}\}/g, ECR_REPOSITORY).replace(/\{\{\s*ECR_IMAGE_TAG\s*\}\}/g, ECR_IMAGE_TAG).replace(/\{\{\s*APPLICATION_NAME\s*\}\}/g, application).replace(/\{\{\s*ENVIRONMENT_NAME\s*\}\}/g, environmentName).replace(/\{\{\s*VERSION_LABEL\s*\}\}/g,versionLabel);;
 }
 
 function describeEvents(application, environmentName, startTime) {
@@ -109,12 +109,12 @@ function expect(status, result, extraErrorMessage) {
 }
 
 //Uploads zip file, creates new version and deploys it
-function deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile) {
+function deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, ECR_IMAGE_TAG, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile) {
     if (!dockerrunFile) {
         dockerrunFile = `{
             "AWSEBDockerrunVersion": "1",
             "Image": { 
-                "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:${versionLabel}",
+                "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:${ECR_IMAGE_TAG}",
                 "Update": "true"
             },
             "Ports": [
@@ -126,7 +126,7 @@ function deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, application, environment
             "Logging": "/var/log/nginx"
         }`
     } else {
-        dockerrunFile = introduceEnvironmentVariablesIntoJSONFile(dockerrunFile, ECR_REGISTRY, ECR_REPOSITORY, application, environmentName, versionLabel);
+        dockerrunFile = introduceEnvironmentVariablesIntoJSONFile(dockerrunFile, ECR_REGISTRY, ECR_REPOSITORY, ECR_IMAGE_TAG, application, environmentName, versionLabel);
     }
     let s3Key = `/${application}/${versionLabel}/Dockerrun.aws.json`;
     let bucket, deployStart;
@@ -191,6 +191,7 @@ function main() {
         region,
         dockerrunFile,
         waitForRecoverySeconds = 30, 
+        ECR_IMAGE_TAG,
         ECR_REGISTRY,
         ECR_REPOSITORY,
         waitUntilDeploymentIsFinished = true; //Whether or not to wait for the deployment to complete...
@@ -198,6 +199,7 @@ function main() {
     if (IS_GITHUB_ACTION) { //Running in GitHub Actions
         ECR_REGISTRY = strip(process.env.INPUT_ECR_REGISTRY);
         ECR_REPOSITORY = strip(process.env.INPUT_ECR_REPOSITORY);
+        ECR_IMAGE_TAG = strip(process.env.INPUT_ECR_IMAGE_TAG);
         application = strip(process.env.INPUT_APPLICATION_NAME);
         environmentName = strip(process.env.INPUT_ENVIRONMENT_NAME);
         versionLabel = strip(process.env.INPUT_VERSION_LABEL);
@@ -216,15 +218,15 @@ function main() {
         }
 
     } else { //Running as command line script
-        if (process.argv.length < 8) {
+        if (process.argv.length < 10) {
             console.log('\nbeanstalk-deploy: Deploying ECR info to AWS Elastic Beanstalk');
             console.log('https://github.com/einaregilsson/beanstalk-deploy\n');
-            console.log('Usage: beanstalk-deploy.js <ECR_REGISTRY> <ECR_REPOSITORY> <application> <environment> <versionLabel> <region> <dockerrunFile> \n');
+            console.log('Usage: beanstalk-deploy.js <ECR_REGISTRY> <ECR_REPOSITORY> <ECR_IMAGE_TAG> <application> <environment> <versionLabel> <region> <dockerrunFile> \n');
             console.log('Environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be defined for the program to work.');
             process.exit(1);
         }
 
-        [ECR_REGISTRY, repository, application, environmentName, versionLabel, region, dockerrunFile] = process.argv.slice(2);
+        [ECR_REGISTRY, ECR_REPOSITORY, ECR_IMAGE_TAG, application, environmentName, versionLabel, region, dockerrunFile] = process.argv.slice(2);
 
         awsApiRequest.accessKey = strip(process.env.AWS_ACCESS_KEY_ID);
         awsApiRequest.secretKey = strip(process.env.AWS_SECRET_ACCESS_KEY);
@@ -255,6 +257,7 @@ function main() {
     console.log('       Version Label: ' + versionLabel);
     console.log('        ECR Registry: ' + ECR_REGISTRY);
     console.log('      ECR Repository: ' + ECR_REPOSITORY);
+    console.log('       ECR Image Tag: ' + ECR_IMAGE_TAG);
     console.log('          AWS Region: ' + awsApiRequest.region);
     console.log('      AWS Access Key: ' + awsApiRequest.accessKey.length + ' characters long, starts with ' + awsApiRequest.accessKey.charAt(0));
     console.log('      AWS Secret Key: ' + awsApiRequest.secretKey.length + ' characters long, starts with ' + awsApiRequest.secretKey.charAt(0));
@@ -263,7 +266,7 @@ function main() {
     console.log('  Recovery wait time: ' + waitForRecoverySeconds);
     console.log('');
 
-    deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile);
+    deployNewVersion(ECR_REGISTRY, ECR_REPOSITORY, ECR_IMAGE_TAG, application, environmentName, versionLabel, waitUntilDeploymentIsFinished, waitForRecoverySeconds, dockerrunFile);
 }
 
 function formatTimespan(since) {
